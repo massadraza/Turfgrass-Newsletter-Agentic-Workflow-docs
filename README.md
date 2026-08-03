@@ -26,11 +26,11 @@ flowchart TD
     end
 
     L1 --> M[merge_ingestion]
-    M --> T["content_triage (Layer 1.5)<br/>9 topic buckets"]
+    M --> T["content_triage (Layer 1.5)<br/>7 topic buckets"]
     T --> O["orchestrator<br/>decides sections + fan-out via Send()"]
 
     O --> L2Z["Layer 2 — per-ZIP agents<br/>weather_agent · disease_agent · pest_agent"]
-    O --> L3S["Layer 3 — shared agents<br/>spray_decision · herbicide · industry_news<br/>academic · superintendent · gdd_phenology<br/>podcast_video · condensed_reports · meme"]
+    O --> L3S["Layer 3 — shared agents<br/>herbicide · industry_news · academic<br/>superintendent · gdd_phenology · podcast_video<br/>condensed_reports · meme"]
 
     L2Z --> E[evaluator<br/>re-dispatch if empty/short]
     L3S --> E
@@ -61,9 +61,8 @@ Triage sorts scraped content into buckets that map 1:1 to newsletter sections.
 | Bucket | Populated by | Section |
 |---|---|---|
 | `weather` | LLM classification | Weather |
-| `disease` | LLM classification | Disease |
+| `disease` | LLM classification (also covers fungicide application/timing/resistance content) | Disease |
 | `pest` | LLM classification (bypassed when MSU GDD Tracker data is available for the zip) | Pest |
-| `spray` | LLM classification, auto-backfilled from `disease` + `academic` if empty | Fungicide / Spray |
 | `herbicide` | LLM classification | Herbicide / Weed |
 | `industry` | LLM classification (default bucket for anything unclassified) | Industry News |
 | `academic` | Direct DB insert from OpenAlex, not LLM-classified — fallback bucket only | Academic Spotlight |
@@ -74,7 +73,7 @@ Triage sorts scraped content into buckets that map 1:1 to newsletter sections.
 
 ### Zip-personalization
 
-Weather, disease, pest, spray, and GDD phenology are zip-dependent — the orchestrator fans out one `Send()` per unique subscriber zip so each gets locally-relevant content. Shared/national sections (industry news, academic, podcast/video, superintendent) run once.
+Weather, disease, pest, and GDD phenology are zip-dependent — the orchestrator fans out one `Send()` per unique subscriber zip so each gets locally-relevant content. Shared/national sections (herbicide, industry news, academic, podcast/video, superintendent) run once.
 
 ### Quality gates
 
