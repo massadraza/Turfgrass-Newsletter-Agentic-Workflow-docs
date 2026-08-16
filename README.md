@@ -1,5 +1,7 @@
 # Turfgrass Weekly
 
+> This repo documents the system design of a private production codebase. It contains no source code — just the architecture writeup below.
+
 An AI-generated weekly newsletter for golf course superintendents and turf managers. A [LangGraph](https://langchain-ai.github.io/langgraph/) pipeline ingests weather data, disease/pest risk dashboards, academic research, industry news, and social content; routes it to parallel GPT-4o writing agents; fact-checks and deduplicates the result; assembles a personalized (per-ZIP) HTML newsletter; and delivers it by email.
 
 A companion FastAPI app (`web.py`) handles subscriber signup/unsubscribe, feedback collection, and serves a React admin dashboard.
