@@ -195,9 +195,14 @@ cd frontend && npm install && npm run dev
 
 ## Deployment
 
-Two Railway services, deployed separately:
+Deployed on [Railway](https://railway.app) as three separate services, sharing one Railway-hosted Postgres (`DATABASE_URL`, pgvector enabled):
 
-- **Web app** (`web.py`) — `railway.toml`; `uvicorn web:app`.
-- **Pipeline** (`pipeline.py`) — `railway-pipeline.toml`, run as a weekly cron job (`0 10 * * 1`, Mondays 10:00 UTC) via `nixpacks`, installing `ffmpeg`/`poppler-utils` for transcript/PDF processing and Playwright's Chromium for dashboard scraping.
+| Service | Config | Trigger | Status |
+|---|---|---|---|
+| **Web app** (`web.py`) | `railway.toml` — `uvicorn web:app --host 0.0.0.0 --port $PORT` | always-on | live — `HITL_BASE_URL` (`https://turfgrass-weekly-production.up.railway.app`) responds 200 |
+| **Pipeline** (`pipeline.py`) | `railway-pipeline.toml` — `nixpacks`, installs `ffmpeg`/`poppler-utils` + Playwright's Chromium | weekly cron, `0 10 * * 1` (Mondays 10:00 UTC) | deployed; recent commits (`da4a83e`, `00cb65a`) fixed Railway-specific issues (missing Chromium binary breaking the GDD chart) |
+| **Delivery-only** (`send_scheduled_newsletter.py`) | `railway-delivery.toml` | weekly cron, `0 9 * * 1` (Mondays 09:00 UTC) | deployed; sends the already-generated draft for the week without regenerating content — see the script's own docstring for the two-stage generate/review-then-send flow it enables |
 
-`railway-delivery.toml` defines a separate delivery-only cron job (`0 9 * * 1`) intended to send an already-generated draft without re-running the full pipeline — note its `startCommand` currently points at `send_scheduled_newsletter.py`, which is not present in this repo; that script needs to be restored or the config updated before that service can run.
+The web app is confirmed reachable directly (`curl` returns 200); the pipeline and delivery cron services can't be health-checked the same way since they only run on their cron schedule rather than serving HTTP — verify their last-run status in the Railway dashboard.
+
+Local `.env` should point at the same `DATABASE_URL` as production unless you're intentionally running against a separate dev database, since the pipeline and web app both read/write the same tables.
